@@ -1,7 +1,8 @@
 /**
-  @file Controlador principal del Juego MecaTRON-3000
-  @author Miguel Jaque <mjaque@fundacionloyola.es>
+  @file mecatron3k.js
+  @author Manuel Solis Gomez <masoggo008@gmail.es>
   @license GPL v3 2021
+  @description archivo encargado de la programacion de este programa
 **/
 
 'use strict'
@@ -34,7 +35,7 @@ class Juego{
   }
 
   generarPalabra(){
-    let nuevaPalabra = this.modelo.crearPalabra()
+    let nuevaPalabra = this.modelo.crearPalabra(this.modelo.nivel)
     this.vista.dibujar(nuevaPalabra)
   }
 
@@ -59,9 +60,17 @@ class Juego{
         nodoTexto.nodeValue = textoRestante.substring(1)
 
         //Si ha completado la palabra, la elimino y sumo puntos
-        if (nodoTexto.nodeValue.length == 0){
-          palabra.remove()
-          this.modelo.sumarPunto()
+        if (nodoTexto.nodeValue.length == 0)
+        {
+          palabra.remove();
+          this.vista.cantidadPuntos(this.modelo.puntuacion(1));  //usamos un metodo del modelo de datos para que al desaparecer la palabra, de 100 puntos mas y de vista para mostrarlo
+          
+          //Si al subir puntos llegamos al 10, cambiaremos el nivel y pondremos la puntuacion a 0
+          if (this.modelo.puntos == 10) 
+          {
+            this.modelo.cambioNivel(1);
+            this.vista.cantidadPuntos(this.modelo.puntuacion(-10))
+          }
         }
       }
       else{
@@ -98,7 +107,8 @@ class Vista{
   /**
     Mueve las palabras del Juego
   **/
-  moverPalabras(){
+  moverPalabras()
+  {
     //Busco todas las palabras del div
     let palabras = this.div.querySelectorAll('.palabra')
 
@@ -109,8 +119,32 @@ class Vista{
       palabra.style.top = `${top}px`
       //Si ha llegado al final
       if (top >= 760)
-        palabra.remove()
+      {
+        this.matarme(palabra);  
+      }
     }
+  }
+  /**
+   * Metodo encargado de eliminar la palabra que llega abajo y quitar puntuacion
+   * @param {element} divSuicida toma al elemento a eliminar
+   */
+  matarme(divSuicida) 
+  {
+    divSuicida.remove();
+    this.cantidadPuntos(app.modelo.puntuacion(-1));
+  }
+  /**
+   * Metodo encargado de visualizar los puntos
+   * @param {int} puntos 
+   */
+  cantidadPuntos(puntos)
+  {
+    let h2 = document.getElementsByTagName('h2')[0];
+    if (h2.textContent.length != 0)  //Si ya tiene una puntuacion la borra y coloca la nueva
+    {
+      h2.firstChild.remove();
+    }
+    h2.appendChild(document.createTextNode(puntos))
   }
 }
 
@@ -118,16 +152,61 @@ class Vista{
   Modelo de datos del juego.
 **/
 class Modelo{
-  constructor(){
-      this.palabras = ['En', 'un', 'lugar', 'de', 'La', 'Mancha']
+  constructor()
+  {
+    this.puntos = 0 //Iniciamos sin puntos
+    this.nivel = 0; //Inicializamos el nivel al 0
+    //Array con los diferentes niveles de palabras que hay
+    this.palabrasNivel = 
+    [
+      ['ju', 'fr', 'fv', 'jm', 'fu', 'jr', 'jv', 'fm'],
+      ['fre', 'jui', 'fui', 'vie', 'mi', 'mery', 'huy'],
+      ['juan', 'remo', 'foca', 'dedo', 'cate']
+    ];
+    this.palabras = ['En', 'un', 'lugar', 'de', 'La', 'Mancha']
   }
   /**
     Devuelve una nueva palabra.
     Devuelve aleatoriamente unn elemento del array de palabras.
+    @param {int} nivel Nivel de palabras
     @return {String} Palabra generada
   **/
-  crearPalabra(){
-    return this.palabras[Math.floor(Math.random() * this.palabras.length)]
+  crearPalabra(nivel)
+  {
+    if (nivel==0) 
+    {
+      return this.palabras[Math.floor(Math.random() * this.palabras.length)]
+    }
+    else
+    {
+      if (nivel<0 || nivel>4) 
+      {
+        alert('Niveles sin hacer');
+      } 
+      else 
+      {
+        return this.palabrasNivel[nivel-1][Math.floor(Math.random() * this.palabrasNivel[nivel-1].length)];
+      }
+      
+    }
+  }
+  /**
+   * Metodo encargado de actualizar la puntuacion
+   * @param {int} cambioPuntos contiene los puntos a sumar o restar a la puntuacion
+   * @returns puntos
+   */
+  puntuacion(cambioPuntos)
+  {
+    this.puntos += cambioPuntos;
+    return this.puntos;
+  }
+  /**
+   * Metodo encargado de subir y bajar el nivel
+   * @param {int} cambio 
+   */
+  cambioNivel(cambio)
+  {
+    this.nivel = this.nivel+cambio;
   }
 }
 
